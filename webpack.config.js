@@ -1,12 +1,10 @@
 const path = require('path');
 
-const dist = './dist';
-
 module.exports = {
   mode: 'production',
 
   optimization: {
-    minimize: false,
+    minimize: true,
   },
 
   entry: {
@@ -14,8 +12,8 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve(__dirname, dist),
-    filename: '[name].js'
+    path: __dirname,
+    filename: '[name].min.js'
   },
 
   module: {
