@@ -31,19 +31,21 @@ const watch = ({ state }, defaultCallback) => {
   diffs.forEach((diff) => {
     const string = objectAsString(changedState);
 
-    const subscription = subscriptions.find(({ property }) => (
+    const matched = subscriptions.filter(({ property }) => (
       property === string || property === string.replace(/./, '')
     ));
 
-    if (!subscription) return;
-
-    subscription.callback(curr, prev);
+    matched.forEach((subscription) => {
+      subscription.callback(curr, prev);
+    });
   });
 
   PREV_STATE = curr;
 };
 
-const createInstance = (storeObj, update = () => {}) => {
+const createInstance = (originalObject, update = () => {}) => {
+  const storeObj = cloneDeep(originalObject);
+
   if (!storeObj.state) {
     throw new Error('property `state` is absent');
   }
@@ -65,8 +67,8 @@ const createInstance = (storeObj, update = () => {}) => {
   }
 
   storeObj.dispatch = (method, payload) => {
-    if (!storeObj.actions[method]) throw new Error(`Action called ${method} is undefined`);
-    storeObj.actions[method](storeObj.state, payload);
+    if (!originalObject.actions[method]) throw new Error(`Action called ${method} is undefined`);
+    originalObject.actions[method](storeObj.state, payload);
   }
 
   storeObj.subscribe = (property, callback, immediate=false) => {
@@ -90,6 +92,7 @@ const createInstance = (storeObj, update = () => {}) => {
 
   setInterval(() => { watch(storeObj, update); }, 100)
 
+  delete storeObj.actions;
   return storeObj;
 };
 
