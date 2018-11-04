@@ -1,66 +1,49 @@
-import compare from './compare.js';
-import { isArray, isObject } from 'lodash';
-
-const equal = (obj1, obj2) => {
-  return JSON.stringify(obj1) === JSON.stringify(obj2);
-}
-
-const clone = (object) => {
-  return JSON.parse(JSON.stringify(object));
-};
+import { isEqual, cloneDeep } from 'lodash';
+import { compare, objectAsString } from './utils.js';
 
 let PREV_STATE;
 const subscriptions = [];
 
-const getChangedProperties = (object, string='') => {
-  const key = Object.keys(object)[0];
-  const string2 = string + '.' + key;
-
-  if (isObject(object[key]) && !isArray(object[key])) {
-    return getChangedProperties(object[key], string2)
-  } else {
-    return string2
-  }
-}
-
-const watch = ({state}, callback) => {
+const watch = ({ state }, defaultCallback) => {
   if (!PREV_STATE) {
-    PREV_STATE = clone(state);
+    PREV_STATE = cloneDeep(state);
     return;
   }
 
-  const prev = clone(PREV_STATE)
-  const curr = clone(state)
+  const curr = cloneDeep(state);
+  const prev = cloneDeep(PREV_STATE);
 
-  const diffs = Object.keys(compare(prev, curr));
+  const changedState = compare(prev, curr);
+  const diffs = Object.keys(changedState);
 
-  if (diffs.length) {
-    callback(curr, prev)
-
-    console.log('Debug:', diffs);
-    console.log(compare(prev, curr))
-
-    const diffentObject = compare(prev, curr);
-
-    // const keys = Object.keysdifferentObject.
-
-    if (subscriptions.length) {
-      diffs.forEach((diff) => {
-        const string = getChangedProperties(diffentObject);
-        const subscription = subscriptions.find(s => s.property === string);
-        console.log('ive been looking for', string)
-
-        if (!subscription) return;
-
-        subscription.callback(curr, prev);
-      })
-    }
-
-    PREV_STATE = curr;
+  if (!changedState || !Object.keys(changedState).length) {
+    return;
   }
+
+  defaultCallback(curr, prev)
+
+  const diffentObject = compare(prev, curr);
+
+  if (!subscriptions.length) {
+    return;
+  }
+
+  diffs.forEach((diff) => {
+    const string = objectAsString(changedState);
+
+    const subscription = subscriptions.find(({ property }) => (
+      property === string || property === string.replace(/./, '')
+    ));
+
+    if (!subscription) return;
+
+    subscription.callback(curr, prev);
+  });
+
+  PREV_STATE = curr;
 };
 
-const createInstance = (storeObj, update) => {
+const createInstance = (storeObj, update = () => {}) => {
   if (!storeObj.state) {
     throw new Error('property `state` is absent');
   }
@@ -77,8 +60,8 @@ const createInstance = (storeObj, update) => {
     throw new Error('object `actions` has zero properties');
   }
 
-  if (!update) {
-    throw new Error('you have not passed second argument')
+  if (typeof update !== 'function') {
+    throw new Error('Second argument must be a function')
   }
 
   storeObj.dispatch = (method, payload) => {

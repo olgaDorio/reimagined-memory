@@ -17254,9 +17254,10 @@ __webpack_require__.r(__webpack_exports__);
 // EXTERNAL MODULE: ./node_modules/lodash/lodash.js
 var lodash = __webpack_require__(0);
 
-// CONCATENATED MODULE: ./compare.js
+// CONCATENATED MODULE: ./utils.js
 
-/* harmony default export */ var compare = ((object, base) => {
+
+const compare = (object, base) => {
   const changes = (object, base) => {
     return Object(lodash["transform"])(object, (result, value, key) => {
       if (!Object(lodash["isEqual"])(value, base[key])) {
@@ -17266,66 +17267,62 @@ var lodash = __webpack_require__(0);
   };
 
   return changes(object, base);
-});
-// CONCATENATED MODULE: ./index.js
-
-
-
-const equal = (obj1, obj2) => {
-  return JSON.stringify(obj1) === JSON.stringify(obj2);
 };
 
-const clone = object => {
-  return JSON.parse(JSON.stringify(object));
-};
-
-let PREV_STATE;
-const subscriptions = [];
-
-const getChangedProperties = (object, string = '') => {
+const objectAsString = (object, string = '') => {
   const key = Object.keys(object)[0];
   const string2 = string + '.' + key;
 
   if (Object(lodash["isObject"])(object[key]) && !Object(lodash["isArray"])(object[key])) {
-    return getChangedProperties(object[key], string2);
+    return objectAsString(object[key], string2);
   } else {
     return string2;
   }
 };
 
+
+// CONCATENATED MODULE: ./index.js
+
+
+let PREV_STATE;
+const subscriptions = [];
+
 const watch = ({
   state
-}, callback) => {
+}, defaultCallback) => {
   if (!PREV_STATE) {
-    PREV_STATE = clone(state);
+    PREV_STATE = Object(lodash["cloneDeep"])(state);
     return;
   }
 
-  const prev = clone(PREV_STATE);
-  const curr = clone(state);
-  const diffs = Object.keys(compare(prev, curr));
+  const curr = Object(lodash["cloneDeep"])(state);
+  const prev = Object(lodash["cloneDeep"])(PREV_STATE);
+  const changedState = compare(prev, curr);
+  const diffs = Object.keys(changedState);
 
-  if (diffs.length) {
-    callback(curr, prev);
-    console.log('Debug:', diffs);
-    console.log(compare(prev, curr));
-    const diffentObject = compare(prev, curr); // const keys = Object.keysdifferentObject.
-
-    if (subscriptions.length) {
-      diffs.forEach(diff => {
-        const string = getChangedProperties(diffentObject);
-        const subscription = subscriptions.find(s => s.property === string);
-        console.log(string);
-        if (!subscription) return;
-        subscription.callback(curr, prev);
-      });
-    }
-
-    PREV_STATE = curr;
+  if (!changedState || !Object.keys(changedState).length) {
+    return;
   }
+
+  defaultCallback(curr, prev);
+  const diffentObject = compare(prev, curr);
+
+  if (!subscriptions.length) {
+    return;
+  }
+
+  diffs.forEach(diff => {
+    const string = objectAsString(changedState);
+    const subscription = subscriptions.find(({
+      property
+    }) => property === string || property === string.replace(/./, ''));
+    if (!subscription) return;
+    subscription.callback(curr, prev);
+  });
+  PREV_STATE = curr;
 };
 
-const createInstance = (storeObj, update) => {
+const createInstance = (storeObj, update = () => {}) => {
   if (!storeObj.state) {
     throw new Error('property `state` is absent');
   }
@@ -17342,8 +17339,8 @@ const createInstance = (storeObj, update) => {
     throw new Error('object `actions` has zero properties');
   }
 
-  if (!update) {
-    throw new Error('you have not passed second argument');
+  if (typeof update !== 'function') {
+    throw new Error('Second argument must be a function');
   }
 
   storeObj.dispatch = (method, payload) => {
