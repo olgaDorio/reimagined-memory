@@ -1,5 +1,4 @@
 # reimagined-memory
-# Dillinger
 ## Установка
 `npm install --save olgaDorio/reimagined-memory`
 или 
