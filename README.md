@@ -1,5 +1,5 @@
 # reimagined-memory
-
+# Dillinger
 ## Установка
 `npm install --save olgaDorio/reimagined-memory`
 или 
@@ -7,28 +7,36 @@
 
 ## Использование
 ### createInstance(store, callback)
-#### store
-должен быть объектом  `{ state, actions }`
-```sh
-store: {
-    state: {
-        value: 0,
-    },
-    actions: {
-        updateValue(state, payload) {
-            state.a = payload;
+Функция `createInstance` принимает два параметра и возвращает объект
+
+- #### store: {state: {}, actions: {}}
+    Пример
+    ```sh
+    store: {
+        state: {
+            value: 0,
         },
-        ...
+        actions: {
+            updateValue(state, payload) {
+                state.a = payload;
+            },
+            ...
+        }
     }
-}
-```
-#### callback(?optional)
-Необязательный параметр. Используется для передачи функии, которая будет вызываться после каждого обновления store. В нее будут переданы текущее и предыдущее значение state:
-```sh
-(currentState, previousState) => {
-    // do something with new state
-}
-```
+    ```
+- #### callback(?optional)
+    Необязательный параметр. Используется для передачи функии, которая будет вызываться после каждого обновления store. В нее будут переданы текущее и предыдущее значение state:
+    ```sh
+    (currentState, previousState) => {
+        // do something with new state
+    }
+    ```
+- ### Возвращаемое значение 
+    ```
+    state: {},
+    dispatch: ()=> {},
+    subscribe: ()=> {}
+    ```
 
 ### .dispatch(actionName, payload?)
 Вызов методов store производится при помощи функции `dispatch`, принимающей два параметра: `actionName` и `payload`. Пример:
@@ -56,7 +64,7 @@ store.dispatch('increment')
 // myCallback is called
 ```
 
-### .subscribe('property.name.with.dots.if.it.is.nested', callback, immediate)
+### .subscribe(`property.name`, callback, immediate)
 Еще один способ подписаться на обновления state, помимо callback в createInstance.
 Функция принимает три параметра: 
 - property - строка идентифицирующая наблюдаемое свойство;
