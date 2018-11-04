@@ -51,8 +51,4 @@ const createInstance = (storeObj, update) => {
   return storeObj;
 };
 
-if (typeof window !== undefined) {
-  window.createInstance = createInstance;
-} else {
-  export default createInstance;
-}
+export default createInstance;
