@@ -67,7 +67,7 @@ const createInstance = (storeObj, update) => {
     storeObj.actions[method](storeObj.state, payload);
   }
 
-  storeObj.subscribe = (property, callback) => {
+  storeObj.subscribe = (property, callback, immediate=false) => {
     if (!property) {
       throw new Error('Missing property')
     }
@@ -80,6 +80,10 @@ const createInstance = (storeObj, update) => {
       property,
       callback,
     });
+
+    if (immediate) {
+      callback(storeObj.state)
+    }
   }
 
   setInterval(() => { watch(storeObj, update); }, 100)
