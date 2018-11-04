@@ -1,9 +1,8 @@
 # reimagined-memory
-# Dillinger
 ## Установка
-`npm install --save olgaDorio/reimagined-memory`
-или 
-`<script src="https://olgadorio.github.io/reimagined-memory/index.min.js">`
+`npm install --save olgaDorio/reimagined-memory`     
+или     
+`<script src="https://olgadorio.github.io/reimagined-memory/index.min.js">`   
 
 ## Использование
 ### createInstance(store, callback)
