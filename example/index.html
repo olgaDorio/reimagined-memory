@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <script src="../dist/index.js"></script>
+</head>
+<body>
+  <button>-</button>
+  <h1 class="value">...</h1>
+  <button>+</button>
+
+  <script>
+    const [decrease, increase] = document.querySelectorAll('button');
+    const counter = document.querySelector('.value');
+
+    const store = createInstance({
+      state: {
+        counter: 0,
+        nested: {
+          obejct: {
+            once: {
+              again: 2000,
+            }
+          },
+        },
+      },
+
+      actions: {
+        increase(state) {
+          state.counter += 1;
+        },
+
+        decrease(state) {
+          state.nested.obejct.once.again = 4;
+          // state.counter -= 1;
+        },
+      },
+    }, (newStore, oldStore) => {
+      counter.innerHTML = newStore.counter;
+    })
+
+    store.subscribe('counter', () => {
+      console.log('subscriber worked');
+    })
+
+    decrease.addEventListener('click', () => {
+      store.dispatch('decrease');
+    });
+
+    increase.addEventListener('click', () => {
+      store.dispatch('increase');
+    });
+  </script>
+</body>
+</html>
