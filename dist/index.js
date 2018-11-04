@@ -17270,6 +17270,7 @@ var lodash = __webpack_require__(0);
 // CONCATENATED MODULE: ./index.js
 
 
+
 const equal = (obj1, obj2) => {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
 };
@@ -17280,6 +17281,17 @@ const clone = object => {
 
 let PREV_STATE;
 const subscriptions = [];
+
+const getChangedProperties = (object, string = '') => {
+  const key = Object.keys(object)[0];
+  const string2 = string + '.' + key;
+
+  if (Object(lodash["isObject"])(object[key]) && !Object(lodash["isArray"])(object[key])) {
+    return getChangedProperties(object[key], string2);
+  } else {
+    return string2;
+  }
+};
 
 const watch = ({
   state
@@ -17295,13 +17307,21 @@ const watch = ({
 
   if (diffs.length) {
     callback(curr, prev);
-    console.log(diffs);
-    diffs.forEach(diff => {
-      const subscription = subscriptions.find(s => s.property === diff);
-      if (!subscription) return;
-      subscription.callback(curr, prev);
-    });
-    PREV_STATE = clone(state);
+    console.log('Debug:', diffs);
+    console.log(compare(prev, curr));
+    const diffentObject = compare(prev, curr); // const keys = Object.keysdifferentObject.
+
+    if (subscriptions.length) {
+      diffs.forEach(diff => {
+        const string = getChangedProperties(diffentObject);
+        const subscription = subscriptions.find(s => s.property === string);
+        console.log(string);
+        if (!subscription) return;
+        subscription.callback(curr, prev);
+      });
+    }
+
+    PREV_STATE = curr;
   }
 };
 
@@ -17331,7 +17351,7 @@ const createInstance = (storeObj, update) => {
     storeObj.actions[method](storeObj.state, payload);
   };
 
-  storeObj.subscribe = (property, callback) => {
+  storeObj.subscribe = (property, callback, immediate = false) => {
     if (!property) {
       throw new Error('Missing property');
     }
@@ -17344,6 +17364,10 @@ const createInstance = (storeObj, update) => {
       property,
       callback
     });
+
+    if (immediate) {
+      callback(storeObj.state);
+    }
   };
 
   setInterval(() => {
