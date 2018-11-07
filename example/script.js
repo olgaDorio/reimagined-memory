@@ -7,12 +7,16 @@ const store = createInstance({
   },
 
   actions: {
-    increase(state) {
-      state.counter += 1;
+    increase(setter) {
+      setter.state = {
+        counter: setter.state.counter + 1,
+      }
     },
 
-    decrease(state) {
-      state.counter -= 1;
+    decrease(setter) {
+      setter.state = {
+        counter: setter.state.counter - 1,
+      }
     },
   },
 })

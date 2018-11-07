@@ -1,47 +1,7 @@
-import { isEqual, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { compare, objectAsString } from './utils.js';
 
-let PREV_STATE;
 const subscriptions = [];
-
-const watch = ({ state }, defaultCallback) => {
-  if (!PREV_STATE) {
-    PREV_STATE = cloneDeep(state);
-    return;
-  }
-
-  const curr = cloneDeep(state);
-  const prev = cloneDeep(PREV_STATE);
-
-  const changedState = compare(prev, curr);
-  const diffs = Object.keys(changedState);
-
-  if (!changedState || !Object.keys(changedState).length) {
-    return;
-  }
-
-  defaultCallback(curr, prev)
-
-  const diffentObject = compare(prev, curr);
-
-  if (!subscriptions.length) {
-    return;
-  }
-
-  diffs.forEach((diff) => {
-    const string = objectAsString(changedState);
-
-    const matched = subscriptions.filter(({ property }) => (
-      property === string || property === string.replace(/./, '')
-    ));
-
-    matched.forEach((subscription) => {
-      subscription.callback(curr, prev);
-    });
-  });
-
-  PREV_STATE = curr;
-};
 
 const createInstance = (originalObject, update = () => {}) => {
   const storeObj = cloneDeep(originalObject);
@@ -66,9 +26,39 @@ const createInstance = (originalObject, update = () => {}) => {
     throw new Error('Second argument must be a function')
   }
 
+  const store = {
+    set state(curr) {
+      const prev = cloneDeep(storeObj.state);
+      storeObj.state = curr;
+      update(curr, prev)
+
+      const changedState = compare(prev, curr);
+      const diffs = Object.keys(changedState);
+
+      if (!subscriptions.length) {
+        return;
+      }
+
+      diffs.forEach((diff) => {
+        const string = objectAsString(changedState);
+
+        const matched = subscriptions.filter(({ property }) => (
+          property === string || property === string.replace(/./, '')
+        ));
+
+        matched.forEach((subscription) => {
+          subscription.callback(curr, prev);
+        });
+      });
+    },
+    get state() {
+      return storeObj.state;
+    },
+  };
+
   storeObj.dispatch = (method, payload) => {
     if (!originalObject.actions[method]) throw new Error(`Action called ${method} is undefined`);
-    originalObject.actions[method](storeObj.state, payload);
+    originalObject.actions[method](store, payload);
   }
 
   storeObj.subscribe = (property, callback, immediate=false) => {
@@ -86,11 +76,9 @@ const createInstance = (originalObject, update = () => {}) => {
     });
 
     if (immediate) {
-      callback(storeObj.state)
+      callback(test.state)
     }
   }
-
-  setInterval(() => { watch(storeObj, update); }, 100)
 
   delete storeObj.actions;
   return storeObj;
